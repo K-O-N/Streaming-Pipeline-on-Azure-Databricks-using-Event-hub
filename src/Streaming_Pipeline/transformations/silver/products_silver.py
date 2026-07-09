@@ -9,26 +9,21 @@ pschema = StructType([StructField('event_type', StringType(), True), StructField
 
 
 
-
-
-@dp.table
-@dp.expect("product_id not null", "product_id is not null")
-@dp.expect_or_fail("price_greater_than_zero", 'price > 0')
-def products_silver():
-
-    df = spark.read.table("dev_stock.bronze.stocks_raw")
-    df = df.withColumn("event_type", get_json_object(col("trades"), "$.event_type"))
-
+def create_products_silver(df):
     # Get product Schema 
-    product = df.filter(col("event_type") == "product")
+    product = ( df.filter(col("event_type") == "product")
+              )
 
 
-    product_df = product.withColumn("data", from_json(col('trades'), pschema))\
-                       .select("data.event_type", "data.ingested_at", "data.payload.*") 
+    product_df = ( product.withColumn("data", from_json(col('trades'), pschema))\
+                          .select("data.event_type", "data.ingested_at", "data.payload.*") 
+                )
 
-    product_df = product_df.drop('alias', 'alias_to', 'about_description', 'auction_mode', 'base_cbrn', 'base_display_symbol', 'best_ask_price', 'best_bid_price', 'cancel_only', 'display_name', 'fcm_trading_session_details', 'high_24h', 'display_name_overwrite', 'icon_color', 'icon_url', 'product_cbrn', 'quote_cbrn', 'trading_disabled', 'view_only', 'is_alpha_testing', 'is_disabled', 'limit_only', 'low_24h', 'market_cap', 'mid_market_price', 'product')
+    product_df =  ( product_df.drop('alias', 'alias_to', 'about_description', 'auction_mode', 'base_cbrn', 'base_display_symbol', 'best_ask_price', 'best_bid_price', 'cancel_only', 'display_name', 'fcm_trading_session_details', 'high_24h', 'display_name_overwrite', 'icon_color', 'icon_url', 'product_cbrn', 'quote_cbrn', 'trading_disabled', 'view_only', 'is_alpha_testing', 'is_disabled', 'limit_only', 'low_24h', 'market_cap', 'mid_market_price', 'product')
+                   
+    )
 
-    product_df = product_df.withColumn('ingested_at', col('ingested_at').cast('timestamp'))\
+    return ( product_df.withColumn('ingested_at', col('ingested_at').cast('timestamp'))\
                         .withColumn('new_at', col('new_at').cast('timestamp'))\
                         .withColumn('approximate_quote_24h_volume', col('approximate_quote_24h_volume').cast(DecimalType(18, 2)))\
                         .withColumn('base_increment', col('base_increment').cast('double'))\
@@ -40,7 +35,22 @@ def products_silver():
                         .withColumn('volume_24h', col('volume_24h').cast(DecimalType(18, 10)))\
                         .withColumn('volume_percentage_change_24h', col('volume_percentage_change_24h').cast('double')) 
 
-    return product_df 
+    )
+
+    
+
+
+
+@dp.table
+@dp.expect("product_id not null", "product_id is not null")
+@dp.expect_or_fail("price_greater_than_zero", 'price > 0')
+def products_silver():
+
+    df = spark.readStream.table("dev_stock.bronze.stocks_raw")
+    df = df.withColumn("event_type", get_json_object(col("trades"), "$.event_type"))
+
+    return create_products_silver(df) 
+
 
                             
                             
