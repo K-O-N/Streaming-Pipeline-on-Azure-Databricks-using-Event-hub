@@ -32,9 +32,8 @@ def stocks_raw():
             .options(**KAFKA_OPTIONS)\
             .load()
 
-  # Convert binary datatypes to string
-  df = df.withColumn("trades", col("value").cast("string"))
+  # return df with binary datatypes as string 
+  return ( df.withColumn("trades", col("value").cast("string"))
+  )
  
-
-  return df 
 
