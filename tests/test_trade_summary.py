@@ -1,6 +1,11 @@
+from pyspark.sql import functions as F
 from pyspark.sql.types import *
-from pyspark.sql.functions import * 
-from src.gold.trade_summary import build_trade_summary
+import pytest
+
+
+from datetime import datetime
+from src.Streaming_Pipeline.transformations.gold.gold_functions import build_trade_summary
+
 
 
 def test_build_trade_summary(spark):
@@ -14,9 +19,9 @@ def test_build_trade_summary(spark):
         ])
 
     data = [
-        ("BTC-USD", "2026-07-03 10:00:00", "BUY", 100.0, 2.0),
-        ("BTC-USD", "2026-07-03 10:01:00", "SELL", 110.0, 1.0),
-        ("BTC-USD", "2026-07-03 10:02:00", "BUY", 120.0, 3.0),
+        ("BTC-USD", datetime(2026, 7, 3, 10, 0, 0), "BUY", 100.0, 2.0),
+        ("BTC-USD", datetime(2026, 7, 3, 10, 2, 0), "SELL", 110.0, 1.0),
+        ("BTC-USD", datetime(2026, 7, 3, 10, 4, 0), "BUY", 120.0, 3.0),
     ]
 
     df = spark.createDataFrame(data, schema=schema)
@@ -36,4 +41,5 @@ def test_build_trade_summary(spark):
     assert row.sell_trade_value == 110.0
 
     assert round(row.buy_percentage, 4) == 0.8333
-    assert round(row.sell_percentage, 4) == 0.1667
+    assert round(row.sell_percentage, 4) == 0.1667 
+

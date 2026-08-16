@@ -1,12 +1,16 @@
-from pyspark.sql.types import *
 from pyspark.sql.functions import *
-from src.Streaming_Pipeline.transformations.gold.gold_trade_summary import build_trade_summary
+from pyspark.sql.types import *
+import pytest
+
+from datetime import datetime, date
+from src.Streaming_Pipeline.transformations.gold.gold_functions import create_gold_dim_time
 
 
 
-def test_dim_time():
+def test_dim_time(spark):
 
     schema = StructType([
+        StructField("trade_id", StringType()),
         StructField("product_id", StringType()),
         StructField("trade_timestamp", TimestampType()),
         StructField("side", StringType()),
@@ -15,9 +19,9 @@ def test_dim_time():
     ])
 
     data = [
-        ("BTC-USD", "2026-07-03 10:00:00", "BUY", 100.0, 2.0),
-        ("BTC-USD", "2026-07-03 10:01:00", "SELL", 110.0, 1.0),
-        ("BTC-USD", "2026-07-03 10:02:00", "BUY", 120.0, 3.0),
+        ("1049502707", "BTC-USD", datetime(2026, 7, 3, 10, 0, 0), "BUY", 100.0, 2.0),
+        ("1049502706",  "BTC-USD", datetime(2026, 7, 3, 10, 1, 0), "SELL", 110.0, 1.0),
+        ("1049502705", "BTC-USD", datetime(2026, 7, 3, 10, 3, 0), "BUY", 120.0, 3.0),
     ]
 
     df = spark.createDataFrame(data, schema)
@@ -26,7 +30,6 @@ def test_dim_time():
 
     row = result.collect()[0]
 
-    assert row.date == 2026-07-03
+    assert row.date == date(2026, 7, 3)
     assert row.year == 2026
     assert row.month == 7
-   
