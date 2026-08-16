@@ -1,10 +1,12 @@
 from pyspark.sql.functions import col
 from pyspark.sql.types import *
+import pytest 
 
-from src.gold.market_summary import build_market_summary
+from datetime import datetime
+from src.Streaming_Pipeline.transformations.gold.gold_functions import build_market_summary
 
 
-def test_build_market_summary():
+def test_build_market_summary(spark):
 
     product_schema = StructType([
         StructField("product_id", StringType()),
@@ -19,9 +21,9 @@ def test_build_market_summary():
     ])
 
     product_data = [
-        ("BTC-USD", "2026-07-03 10:00:00", 60000.0),
-        ("BTC-USD", "2026-07-03 10:05:00", 60500.0),
-        ("ETH-USD", "2026-07-03 10:00:00", 2000.0),
+        ("BTC-USD", datetime(2026, 7, 3, 10, 0, 0), 60000.0), 
+        ("BTC-USD", datetime(2026, 7, 3, 10, 5, 0), 60500.0),
+        ("ETH-USD", datetime(2026, 7, 3, 10, 6, 0), 2000.0),
     ]
 
     ticker_data = [
@@ -42,4 +44,5 @@ def test_build_market_summary():
     assert btc.max_bid == 60500.0
     assert btc.max_ask == 60520.0
 
-    assert result.count() == 2
+    assert result.count() == 2 
+
